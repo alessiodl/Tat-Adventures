@@ -158,17 +158,19 @@ Tutti gli effetti sonori e le musiche sono generati interamente da codice con la
 
 ---
 
-## 8. Modalità Tablet e Controlli Touch
+## 8. Modalità Mobile / Tablet, Hamburger Menu e Fix Audio iOS
 
-- **Ottimizzazione Viewport Tablet:** Inserito il meta tag `viewport` (`width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover`) per prevenire gesti di pinch-to-zoom indesiderati e garantire il corretto posizionamento dello schermo.
-- **Layout Responsive Adattivo:** Il canvas preserva la risoluzione interna HiDPI Retina (1000x562px) ma adotta un dimensionamento CSS fluido (`width: 100%; max-width: 1000px; height: auto; aspect-ratio: 1000 / 562; touch-action: none;`), permettendo al gioco di adattarsi perfettamente a qualsiasi schermo di tablet (iPad, tablet Android) sia in orizzontale che in verticale.
-- **Gamepad Virtuale On-Screen:**
-  - **Mano Sinistra (D-Pad Movimento):** Pulsanti `◀ INDIETRO`, `▼ GIÙ`, `▶ AVANTI`.
-  - **Mano Destra (Azioni):** 
-    - `🦘 SALTA`: Salto acrobatico (mappato su `Space`, `ArrowUp`, `KeyW`).
-    - `💨 SCIVOLA` / `🛑 FRENA`: Pulsante dinamico contestuale (Scivolata su fango in M2, Frenata assistita in M5).
-  - **Design Glassmorphic & Feedback:** Stile visivo a tema con bordi morbidi pastello, icone grandi ad alta leggibilità, animazione elastica al tocco e glow dorato durante la pressione.
-- **Multi-Touch Reale:** Supporto simultaneo per più tocchi contemporanei (ad es. tenere premuto `AVANTI` e toccare ripetutamente `SALTA`).
-- **Integrazione Nativa con il Motore Fisico:** I pulsanti touch aggiornano in tempo reale la mappa di input globale `keys`, mantenendo la fisica, l'inerzia e le collisioni identiche alla versione desktop.
-- **Interattività Cutscene:** Possibilità di avviare immediatamente la missione con un singolo tap sullo schermo o sui comandi touch.
-- **Rilevamento Automatico & Toggle Dedicato:** Rilevamento automatico di schermi touchscreen con opzione toggle nella top-bar (`[📱 Touch: ON/OFF]`) per attivare o nascondere i comandi a schermo a piacimento.
+- **Esperienza Fullscreen Mobile:** Il gioco ora occupa il 100% dell'area visibile dello schermo (`100vw x 100dvh` con `overflow: hidden`), eliminando scrollbar o tagli visivi su iPhone e tablet in qualsiasi orientamento (landscape/portrait).
+- **Hamburger Menu Semi-Trasparente:** Sostituita la barra superiore ingombrante con un elegante pulsante ☰ posizionato in alto a destra in sovrimpressione glassmorphic (`rgba(255,255,255,0.78)` con `backdrop-filter: blur(10px)`). Cliccandolo si apre un drawer laterale scorrevole con:
+  - Toggle Audio (`🎵 Musica: ON/OFF`)
+  - Selettore istantaneo delle 5 missioni con evidenziazione attiva
+  - Toggle dei comandi touch a schermo
+  - Scheda con la guida e gli obiettivi della missione corrente
+- **Controlli Touch in Semitrasparenza (Overlay):** I pulsanti virtuali fluttuano ora sopra il fondale in basso a sinistra (D-Pad direzioni) e in basso a destra (Salta e Scivola/Frena) con trasparenza elegante (`opacity: 0.82`), lasciando l'intera visuale di gioco aperta e sgombra.
+- **Risoluzione Audio iOS Safari (iPhone / iPad):**
+  - Risolto il blocco audio tipico di iOS WebKit tramite riproduzione immediata di un silent buffer sincrono al primo tap (`unlockIOSAudio`).
+  - Sblocco Web Audio universale agganciato a `['touchstart', 'touchend', 'click', 'keydown']` su `window`.
+  - Risolto il disallineamento temporale (`audioCtx.currentTime > nextNoteTime`) che causava il freeze o il collasso dei nodi audio su Safari.
+  - Schedulazione musicale sincronizzata anche all'interno del game loop principale `update()`, garantendo continuità della melodia anche se Safari riduce la frequenza dei `setInterval` in background.
+  - Gestione dell'evento `visibilitychange` per sospendere e riprendere correttamente l'audio quando si cambia tab.
+- **File di ingresso `index.html`:** Generato `index.html` allineato a `tata_game.html` per l'accesso immediato da root su GitHub Pages.
