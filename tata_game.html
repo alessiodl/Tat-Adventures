@@ -215,6 +215,16 @@
       color: #33691E;
       line-height: 1.4;
     }
+    .menu-hint-text {
+      font-size: 11px;
+      color: #E65100;
+      background: #FFF3E0;
+      border: 1px solid #FFE0B2;
+      border-radius: 9px;
+      padding: 7px 10px;
+      line-height: 1.35;
+      text-align: center;
+    }
 
     /* Controlli Touch in Semitrasparenza (Overlay Fisso in basso) */
     .touch-controls {
@@ -239,32 +249,33 @@
     }
     .touch-btn {
       outline: none;
-      border: 2.5px solid rgba(255, 255, 255, 0.85);
+      border: 2px solid rgba(255, 255, 255, 0.55);
       border-radius: 20px;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      opacity: 0.82;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22), inset 0 1px 2px rgba(255, 255, 255, 0.7);
+      opacity: 0.48; /* Molto trasparente a riposo per lasciare visibile il gioco */
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.5);
       font-family: inherit;
       font-weight: bold;
-      transition: transform 0.08s ease, filter 0.08s ease, opacity 0.08s ease;
+      transition: transform 0.08s ease, filter 0.08s ease, opacity 0.15s ease, border-color 0.15s ease;
       touch-action: none;
     }
     .touch-btn:active, .touch-btn.touch-active {
       transform: scale(0.92);
-      opacity: 1.0;
-      filter: brightness(1.15);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 16px rgba(255, 215, 0, 0.85);
+      opacity: 0.92; /* Nitido e luminoso solo quando premuto */
+      filter: brightness(1.2);
+      border-color: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 16px rgba(255, 215, 0, 0.85);
     }
     .touch-btn-dir {
       width: 64px;
       height: 60px;
-      background: rgba(255, 255, 255, 0.68);
+      background: rgba(255, 255, 255, 0.42);
       color: #1b5e20;
     }
     .touch-btn-dir .touch-arrow {
@@ -280,17 +291,17 @@
     .touch-btn-action {
       height: 62px;
       color: #FFFFFF;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.35);
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
     }
     .touch-btn-slide {
       width: 96px;
-      background: linear-gradient(135deg, rgba(255, 167, 38, 0.82), rgba(251, 140, 0, 0.82));
-      border-color: rgba(255, 224, 130, 0.9);
+      background: linear-gradient(135deg, rgba(255, 167, 38, 0.55), rgba(251, 140, 0, 0.55));
+      border-color: rgba(255, 224, 130, 0.6);
     }
     .touch-btn-jump {
       width: 110px;
-      background: linear-gradient(135deg, rgba(76, 175, 80, 0.85), rgba(46, 125, 50, 0.85));
-      border-color: rgba(165, 214, 167, 0.9);
+      background: linear-gradient(135deg, rgba(76, 175, 80, 0.58), rgba(46, 125, 50, 0.58));
+      border-color: rgba(165, 214, 167, 0.6);
     }
     .touch-btn-action .touch-icon {
       font-size: 22px;
@@ -472,6 +483,9 @@
         <button id="menuMusicBtn" class="menu-action-btn" onclick="toggleMusic()" tabindex="-1">
           🎵 Musica: ON
         </button>
+        <div class="menu-hint-text">
+          🔔 <b>Su iPhone:</b> se non senti la musica, disattiva la levetta laterale del silenzioso (non deve essere arancione) e alza il volume!
+        </div>
       </div>
 
       <div class="menu-section">
@@ -792,17 +806,36 @@ const BASS_STEPS = [
   'C3', 'G3', 'G2', 'B2', 'C3', 'R', 'C3', 'R'
 ];
 
+let html5Unlocked = false;
+
+// Sblocco modalità Playback multimediale su iOS per aggirare il selettore silenzioso
+function unlockIOSSilentSwitch() {
+  if (html5Unlocked) return;
+  try {
+    const silentAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAP//");
+    silentAudio.volume = 0.01;
+    const p = silentAudio.play();
+    if (p && p.then) {
+      p.then(() => {
+        html5Unlocked = true;
+      }).catch(() => {});
+    }
+  } catch (e) {}
+}
+
 function unlockIOSAudio() {
+  unlockIOSSilentSwitch();
+
   if (!audioCtx) {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     audioCtx = new AudioContextClass();
 
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.35; // Volume ottimizzato anche per altoparlanti iPhone
+    masterGain.gain.value = 0.65; // Volume corposo e ben udibile su iPhone
     masterGain.connect(audioCtx.destination);
 
     musicGain = audioCtx.createGain();
-    musicGain.gain.value = 0.75;
+    musicGain.gain.value = 0.8;
     musicGain.connect(masterGain);
 
     sfxGain = audioCtx.createGain();
@@ -811,16 +844,20 @@ function unlockIOSAudio() {
 
     startMusicLoop();
   }
+
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
   }
-  // Riproduce un micro-buffer muto (tecnica fondamentale per sbloccare Web Audio su iOS WebKit)
+
+  // Micro-nota istantanea impercettibile per forzare lo sblocco dello stato audio in Safari
   try {
-    const buffer = audioCtx.createBuffer(1, 1, 22050);
-    const source = audioCtx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audioCtx.destination);
-    source.start(0);
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    g.gain.value = 0.0001;
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.start(0);
+    osc.stop(audioCtx.currentTime + 0.01);
   } catch (e) {}
 }
 
@@ -835,8 +872,8 @@ function ensureAudioStarted() {
   }
 }
 
-// Sblocco audio al primissimo tocco o click su qualsiasi elemento
-['touchstart', 'touchend', 'click', 'keydown'].forEach(evtType => {
+// Sblocco audio al primissimo tocco, click o tasto
+['touchstart', 'touchend', 'pointerdown', 'click', 'keydown'].forEach(evtType => {
   window.addEventListener(evtType, () => {
     ensureAudioStarted();
   }, { capture: true, passive: true });
@@ -925,7 +962,7 @@ function scheduler() {
     const bassNote = BASS_STEPS[currentStep % BASS_STEPS.length];
     const bassFreq = NOTE_FREQS[bassNote] || 0;
     if (bassFreq > 0) {
-      playSynthNote(bassFreq, nextNoteTime, stepDuration * 0.75, 'sine', 0.35);
+      playSynthNote(bassFreq, nextNoteTime, stepDuration * 0.75, 'triangle', 0.45);
     }
 
     // 3. Ritmo
